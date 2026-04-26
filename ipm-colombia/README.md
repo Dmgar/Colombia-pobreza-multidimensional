@@ -24,8 +24,8 @@ El dashboard incluye:
 ### 1. Clona el repositorio
 
 ```bash
-git clone https://github.com/Dmgar/ipm-colombia.git
-cd ipm-colombia
+git clone https://github.com/Dmgar/Colombia-pobreza-multidimensional.git
+cd Colombia-pobreza-multidimensional/ipm-colombia
 ```
 
 ### 2. Crea un entorno virtual (recomendado)
