@@ -10,10 +10,12 @@ Dashboard interactivo para explorar el **Índice de Pobreza Multidimensional (IP
 
 El dashboard incluye:
 - Mapa coroplético interactivo por departamento
-- Comparativa de brechas campo–ciudad
+- Tarjeta "Si Colombia fueran 100 personas" con privaciones seleccionables
+- Comparativa de brechas campo–ciudad con sombreado visual
 - Ranking horizontal de departamentos más afectados
 - IPM promedio por región geográfica (Amazonía-Orinoquía, Caribe, Pacífica, Central, Oriental, Bogotá D.C.)
-- Gráfica de cambio año a año en formato horizontal legible
+- Evolución histórica 2018–2025 filtrable por departamento
+- Brecha de género por sexo del jefe de hogar
 
 ---
 
@@ -22,7 +24,7 @@ El dashboard incluye:
 ### 1. Clona el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/ipm-colombia.git
+git clone https://github.com/Dmgar/ipm-colombia.git
 cd ipm-colombia
 ```
 
@@ -46,19 +48,28 @@ pip install -r requirements.txt
 
 ---
 
- Los archivos de datos **no se incluyen** en el repositorio por su tamaño y licencia. Ver sección de datos abajo.
+> Los archivos de datos **no se incluyen** en el repositorio por su tamaño y licencia. Ver sección de datos abajo.
 
 ---
 
 ## Datos necesarios
+
+Coloca todos los archivos en la carpeta `data/` del proyecto:
+
+```
+data/
+├── MGN2024_DPTO_POLITICO.zip   ← descargar manualmente del DANE
+├── ipm_dpto.csv
+├── ipm_indicadores_dpto.csv
+└── ipm_sexo_dpto.csv
+```
 
 ### Geometría departamental
 - **Archivo:** `MGN2024_DPTO_POLITICO.zip`
 - **Fuente:** [DANE — Marco Geoestadístico Nacional 2024](https://geoportal.dane.gov.co/servicios/descarga-y-metadatos/datos-geoestadisticos/)
 - **Formato:** Shapefile comprimido en ZIP
 
-### Datos IPM
-- **Archivo:** `ipm_dpto.csv`
+### Datos IPM por departamento (`ipm_dpto.csv`)
 - **Fuente:** DANE — ECV (Encuesta de Calidad de Vida)
 - **Columnas requeridas:**
 
@@ -67,34 +78,28 @@ pip install -r requirements.txt
 | `nombre_dpto` | str    | Nombre del departamento                          |
 | `cod_dpto`    | str    | Código DANE del departamento (2 dígitos, con 0 inicial) |
 | `Año`         | int    | Año de la medición                               |
-| `Categoria`   | str    | `Total`, `Cabecera`, `Centros poblados y rural disperso` |
+| `Categoria`   | str    | `Total`, `Cabeceras`, `Centros poblados y rural disperso` |
 | `IPM`         | float  | Valor del índice (porcentaje)                    |
 
----
+### Datos de indicadores de privación (`ipm_indicadores_dpto.csv`)
+Desagregación de las 15 privaciones del IPM por departamento, año y zona.
 
-## Configuración de rutas
-
-Antes de ejecutar, edita las rutas en `app.py` según tu sistema:
-
-```python
-# app.py — líneas 14-15
-GEO_PATH = r"C:\ruta\a\MGN2024_DPTO_POLITICO.zip"
-CSV_PATH = r"C:\ruta\a\ipm_dpto.csv"
-```
+### Datos por sexo (`ipm_sexo_dpto.csv`)
+IPM desagregado por sexo del jefe de hogar, para el análisis de brecha de género.
 
 ---
 
 ## Ejecución
 
 ```bash
-python app.py
+python mapa_agua.py
 ```
 
 Abre tu navegador en: **http://127.0.0.1:8050**
 
 ---
 
-##  Regiones incluidas
+## Regiones incluidas
 
 | Región                    | Departamentos                                             |
 |---------------------------|-----------------------------------------------------------|
@@ -103,7 +108,7 @@ Abre tu navegador en: **http://127.0.0.1:8050**
 | Pacífica                  | Chocó, Cauca, Nariño, Valle del Cauca                    |
 | Central                   | Antioquia, Caldas, Caquetá, Huila, Putumayo, Quindío, Risaralda, Tolima |
 | Oriental                  | Boyacá, Cundinamarca, Norte de Santander, Santander       |
-| Bogotá D.C. (Cabecera)    | Bogotá D.C.                                               |
+| Bogotá D.C.               | Bogotá D.C.                                               |
 
 ---
 
@@ -111,13 +116,15 @@ Abre tu navegador en: **http://127.0.0.1:8050**
 
 | Librería     | Versión  | Uso                              |
 |--------------|----------|----------------------------------|
-| Dash         | 2.18.2   | Framework web interactivo        |
-| Plotly       | 5.24.1   | Gráficas y mapa coroplético      |
-| Pandas       | 2.2.3    | Procesamiento de datos           |
-| GeoPandas    | 1.0.1    | Lectura de geometría espacial    |
+| Dash         | 4.1.0    | Framework web interactivo        |
+| Plotly       | 6.7.0    | Gráficas y mapa coroplético      |
+| Pandas       | 3.0.1    | Procesamiento de datos           |
+| GeoPandas    | 1.1.3    | Lectura de geometría espacial    |
+| NumPy        | 2.4.3    | Cálculos numéricos               |
+| Gunicorn     | 23.0.0   | Servidor WSGI para deploy        |
 
 ---
 
-##  Licencia
+## Licencia
 
 Datos: © DANE Colombia. Código: MIT License.
