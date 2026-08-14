@@ -15,6 +15,35 @@ import numpy as np # Para la demo, pero se puede quitar si no se usa
 
 from pathlib import Path
 
+from figuras import (
+    BASE_LAYOUT,
+    add_area_bajo_linea,
+    add_marca_brecha,
+    add_serie_anual,
+    layout_serie_anual,
+    texto_brecha,
+)
+from ui import (
+    C,
+    CARD,
+    caja_insight,
+    campo_dropdown,
+    fila_contexto,
+    fila_leyenda,
+    grafico,
+    item_destacado,
+    item_leyenda,
+    nota_fuente,
+    opciones_con_nacional,
+    panel_seccion,
+    subtitulo_seccion,
+    tag_seccion,
+    tarjeta_lista,
+    tarjeta_nota,
+    tarjeta_texto,
+    titulo_seccion,
+)
+
 # ══════════════════════════════════════════════════════════════════
 # RUTAS DE DATOS (relativas al directorio del proyecto)
 # ══════════════════════════════════════════════════════════════════
@@ -75,31 +104,7 @@ REGION_COLORS = {
 # ══════════════════════════════════════════════════════════════════
 # COLORES Y ESTILOS GLOBALES
 # ══════════════════════════════════════════════════════════════════
-C = {
-    "bg":      "#F7F4EF",
-    "card":    "#FFFFFF",
-    "accent":  "#B5341A",
-    "text":    "#1A1A1A",
-    "muted":   "#6B6B6B",
-    "border":  "#E2DDD6",
-    "green":   "#2D6A4F",
-    "green2":  "#74C69D",
-}
-
-CARD = {
-    "background":   C["card"],
-    "borderRadius": "12px",
-    "padding":      "28px 32px",
-    "boxShadow":    "0 2px 12px rgba(0,0,0,0.06)",
-    "marginBottom": "24px",
-}
-
-BASE_LAYOUT = dict(
-    font_family="Georgia, serif",
-    plot_bgcolor="white",
-    paper_bgcolor="white",
-    margin=dict(t=40, b=50, l=180, r=40),
-)
+# La paleta (C), la tarjeta base (CARD) y BASE_LAYOUT viven en ui.py y figuras.py.
 
 # ══════════════════════════════════════════════════════════════════
 # TEXTOS DINÁMICOS POR INDICADOR
@@ -424,49 +429,19 @@ def build_fig_agua(dpto_sel="Nacional", df_nac=None, df_dpto=None, nombre_ind="S
 
         # Área de fondo sólo para Rural (énfasis visual)
         if zona == "Rural disperso":
-            fig.add_trace(go.Scatter(
-                x=list(ds["Año"]) + list(ds["Año"])[::-1],
-                y=list(ds["pct"]) + [0] * len(ds),
-                fill="toself",
-                fillcolor="rgba(201, 74, 23, 0.08)",
-                line=dict(width=0),
-                showlegend=False,
-                hoverinfo="skip",
-                name="_relleno_rural",
-            ))
+            add_area_bajo_linea(fig, ds["Año"], ds["pct"],
+                                "rgba(201, 74, 23, 0.08)", nombre="_relleno_rural")
 
-        # Línea principal
-        fig.add_trace(go.Scatter(
-            x=ds["Año"],
-            y=ds["pct"],
-            mode="lines+markers+text",
-            name=zona,
-            line=dict(
-                color=PALETA_AGUA[zona],
-                width=ANCHO_AGUA[zona],
-                dash=DASH_AGUA[zona],
-            ),
-            marker=dict(
-                symbol=SIMBOLO_AGUA[zona],
-                size=10,
-                color=PALETA_AGUA[zona],
-                line=dict(width=1.5, color="white"),
-            ),
-            # Etiquetas de datos en cada punto
-            text=ds["pct"].map("{:.1f}%".format),
-            textposition="top center",
-            textfont=dict(
-                family="DM Mono, monospace",
-                size=10,
-                color=PALETA_AGUA[zona],
-            ),
+        add_serie_anual(
+            fig, ds["Año"], ds["pct"], zona,
+            PALETA_AGUA[zona], ANCHO_AGUA[zona], DASH_AGUA[zona], SIMBOLO_AGUA[zona],
             hovertemplate=(
                 f"<b>{zona}</b><br>"
                 "Año: %{x}<br>"
                 "Porcentaje con privación: %{y:.1f}%"
                 "<extra></extra>"
             ),
-        ))
+        )
 
     # ── Anotaciones clave ────────────────────────────────────────
     # Flecha de brecha en el año más reciente disponible
@@ -487,71 +462,13 @@ def build_fig_agua(dpto_sel="Nacional", df_nac=None, df_dpto=None, nombre_ind="S
         if not val_rural.empty and not val_cab.empty:
             vr = val_rural.values[0]
             vc = val_cab.values[0]
-            brecha = vr - vc
-
-            fig.add_annotation(
-                x=anio_max,
-                y=(vr + vc) / 2,
-                text=f"<b>Brecha<br>{brecha:+.1f} pp</b>",
-                showarrow=False,
-                xanchor="left",
-                xshift=18,
-                font=dict(family="DM Mono, monospace", size=12, color="#B5341A"),
-                bgcolor="rgba(255,248,245,0.9)",
-                bordercolor="#B5341A",
-                borderwidth=1,
-                borderpad=5,
-            )
-            # Línea de brecha vertical
-            fig.add_shape(
-                type="line",
-                x0=anio_max, x1=anio_max,
-                y0=vc, y1=vr,
-                line=dict(color="#B5341A", width=1.5, dash="dot"),
-            )
+            add_marca_brecha(fig, anio_max, vc, vr, "#B5341A", texto_brecha(vr - vc))
 
     # ── Layout ───────────────────────────────────────────────────
-    fig.update_layout(
-        font_family="Georgia, serif",
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        height=460,
-        margin=dict(t=50, b=150, l=60, r=80),
-        xaxis=dict(
-            title=dict(text="Año", font=dict(size=11, color="#6B6B6B")),
-            tickmode="array",
-            tickvals=anios_agua,
-            ticktext=[str(a) for a in anios_agua],
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True,
-            gridcolor="#F0EBE3",
-            gridwidth=1,
-            zeroline=False,
-        ),
-            yaxis=dict(
-                title=dict(
-                    text=f"Hogares con privación: {nombre_ind[:40]}{'...' if len(nombre_ind) > 40 else ''} (%)",
-                font=dict(size=11, color="#6B6B6B"),
-            ),
-            ticksuffix="%",
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True,
-            gridcolor="#F0EBE3",
-            gridwidth=1,
-            zeroline=False,
-            rangemode="tozero",
-        ),
-        legend=dict(
-            orientation="h",
-            y=-0.55,
-            x=0.5,
-            xanchor="center",
-            font=dict(family="Source Serif 4, serif", size=12),
-            bgcolor="rgba(0,0,0,0)",
-            itemwidth=80,
-        ),
-        hovermode="x unified",
-    )
+    etiqueta_ind = f"{nombre_ind[:40]}{'...' if len(nombre_ind) > 40 else ''}"
+    fig.update_layout(**layout_serie_anual(
+        anios_agua, f"Hogares con privación: {etiqueta_ind} (%)"
+    ))
 
     return fig
 
@@ -584,39 +501,15 @@ def build_fig_genero(dpto_sel="Nacional"):
 
         # Relleno bajo la línea de Mujer para énfasis visual
         if sexo == "Mujer":
-            fig.add_trace(go.Scatter(
-                x=list(ds["Año"]) + list(ds["Año"])[::-1],
-                y=list(ds["Valor"]) + [0] * len(ds),
-                fill="toself",
-                fillcolor="rgba(201, 74, 23, 0.07)",
-                line=dict(width=0),
-                showlegend=False,
-                hoverinfo="skip",
-            ))
+            add_area_bajo_linea(fig, ds["Año"], ds["Valor"], "rgba(201, 74, 23, 0.07)")
 
-        fig.add_trace(go.Scatter(
-            x=ds["Año"],
-            y=ds["Valor"],
-            mode="lines+markers+text",
-            name=sexo,
-            line=dict(
-                color=PALETA_SEXO[sexo],
-                width=ANCHO_SEXO[sexo],
-                dash=DASH_SEXO[sexo],
-            ),
-            marker=dict(
-                symbol=SIMBOLO_SEXO[sexo],
-                size=10,
-                color=PALETA_SEXO[sexo],
-                line=dict(width=1.5, color="white"),
-            ),
-            text=ds["Valor"].map("{:.1f}%".format),
-            textposition="top center",
-            textfont=dict(family="DM Mono, monospace", size=10, color=PALETA_SEXO[sexo]),
+        add_serie_anual(
+            fig, ds["Año"], ds["Valor"], sexo,
+            PALETA_SEXO[sexo], ANCHO_SEXO[sexo], DASH_SEXO[sexo], SIMBOLO_SEXO[sexo],
             hovertemplate=(
                 f"<b>{sexo}</b><br>Año: %{{x}}<br>Privación: %{{y:.1f}}%<extra></extra>"
             ),
-        ))
+        )
 
     # Anotación de brecha en el año más reciente
     if not df_plot.empty:
@@ -625,55 +518,12 @@ def build_fig_genero(dpto_sel="Nacional"):
         val_h = df_plot.loc[(df_plot["Año"] == anio_max) & (df_plot["Sexo"] == "Hombre"), "Valor"]
         if not val_m.empty and not val_h.empty:
             vm, vh = val_m.values[0], val_h.values[0]
-            brecha = vm - vh
-            fig.add_annotation(
-                x=anio_max,
-                y=(vm + vh) / 2,
-                text=f"<b>Brecha<br>{brecha:+.1f} pp</b>",
-                showarrow=False,
-                xanchor="left",
-                xshift=18,
-                font=dict(family="DM Mono, monospace", size=12, color="#B5341A"),
-                bgcolor="rgba(255,248,245,0.9)",
-                bordercolor="#B5341A",
-                borderwidth=1,
-                borderpad=5,
-            )
-            fig.add_shape(
-                type="line",
-                x0=anio_max, x1=anio_max,
-                y0=min(vm, vh), y1=max(vm, vh),
-                line=dict(color="#B5341A", width=1.5, dash="dot"),
-            )
+            add_marca_brecha(fig, anio_max, min(vm, vh), max(vm, vh),
+                             "#B5341A", texto_brecha(vm - vh))
 
-    fig.update_layout(
-        font_family="Georgia, serif",
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        height=460,
-        margin=dict(t=50, b=150, l=60, r=90),
-        xaxis=dict(
-            title=dict(text="Año", font=dict(size=11, color="#6B6B6B")),
-            tickmode="array",
-            tickvals=anios_g,
-            ticktext=[str(a) for a in anios_g],
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True, gridcolor="#F0EBE3", gridwidth=1, zeroline=False,
-        ),
-        yaxis=dict(
-            title=dict(text="Hogares con privación (%)", font=dict(size=11, color="#6B6B6B")),
-            ticksuffix="%",
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True, gridcolor="#F0EBE3", gridwidth=1, zeroline=False, rangemode="tozero",
-        ),
-        legend=dict(
-            orientation="h", y=-0.55, x=0.5, xanchor="center",
-            font=dict(family="Source Serif 4, serif", size=12),
-            bgcolor="rgba(0,0,0,0)",
-            itemwidth=80,
-        ),
-        hovermode="x unified",
-    )
+    fig.update_layout(**layout_serie_anual(
+        anios_g, "Hogares con privación (%)", margin_r=90
+    ))
     return fig
 
 
@@ -733,263 +583,91 @@ def build_fig_disparidad_dpto():
     )
     return fig, ANIO_MAX_SEXO, df_pivot
 # ══════════════════════════════════════════════════════════════════
-SECCION_AGUA_LAYOUT = html.Div(style={
-    "background":    "#FFFFFF",
-    "borderRadius":  "12px",
-    "padding":       "28px 32px",
-    "boxShadow":     "0 2px 12px rgba(0,0,0,0.06)",
-    "marginBottom":  "24px",
-    "borderTop":     "4px solid #1A6FA8",
-}, children=[
+SECCION_AGUA_LAYOUT = panel_seccion("#1A6FA8", [
 
     # ── Encabezado de sección ─────────────────────────────
-    html.P(id="seccion-tag-agua",
-           style={
-               "fontFamily":    "'DM Mono', monospace",
-               "fontSize":      "0.68rem",
-               "letterSpacing": "0.13em",
-               "color":         "#1A6FA8",
-               "marginBottom":  "6px",
-           }),
-
-    # ── Mensaje clave ────────────────────────────────────
-    html.H2(id="titulo-agua",
-        style={
-            "fontFamily":  "'Playfair Display', serif",
-            "fontSize":    "clamp(1.2rem, 2.5vw, 1.8rem)",
-            "fontWeight":  "700",
-            "color":       "#1A1A1A",
-            "lineHeight":  "1.25",
-            "marginBottom": "10px",
-        }
-    ),
-
-    # ── Subtítulo ────────────────────────────────────────
-    html.P(id="subtitulo-agua",
-        style={
-            "fontFamily": "'Source Serif 4', serif",
-            "fontSize":   "0.95rem",
-            "color":      "#5A5A5A",
-            "lineHeight": "1.7",
-            "maxWidth":   "780px",
-            "marginBottom": "22px",
-        }
-    ),
-
-    # ── Insight narrativo ────────────────────────────────
-    html.Div(
-        id="insight-agua",
-        style={
-            "background":   "#FFF8F5",
-            "borderLeft":   "3px solid #C94A17",
-            "padding":      "14px 18px",
-            "borderRadius": "0 8px 8px 0",
-            "fontFamily":   "'Source Serif 4', serif",
-            "fontStyle":    "italic",
-            "color":        "#3A2A20",
-            "fontSize":     "0.93rem",
-            "lineHeight":   "1.65",
-            "marginBottom": "20px",
-        }
-    ),
+    tag_seccion("#1A6FA8", id="seccion-tag-agua"),
+    titulo_seccion(id="titulo-agua"),
+    subtitulo_seccion(id="subtitulo-agua"),
+    caja_insight(id="insight-agua"),
 
     # ── Leyenda de formas preattentivas ─────────────────
-    html.Div(style={
-        "display": "flex", "gap": "60px", "flexWrap": "wrap",
-        "marginBottom": "24px", "alignItems": "center",
-    }, children=[
-        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px"}, children=[
-            html.Div(style={
-                "width": "32px", "height": "3px",
-                "background": "#1A6FA8", "borderRadius": "2px"
-            }),
-            html.Div("◯  Cabecera municipal", style={
-                "fontFamily": "'Source Serif 4', serif",
-                "fontSize": "0.82rem", "color": "#1A6FA8", "fontWeight": "600"
-            }),
-        ]),
-        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px"}, children=[
-            html.Div(style={
-                "width": "32px", "height": "3px",
-                "background": "#C94A17",
-                "borderTop": "3px dotted #C94A17",
-                "borderBottom": "none"
-            }),
-            html.Div("◆  Rural disperso", style={
-                "fontFamily": "'Source Serif 4', serif",
-                "fontSize": "0.82rem", "color": "#C94A17", "fontWeight": "600"
-            }),
-        ]),
-        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px"}, children=[
-            html.Div(style={
-                "width": "32px", "height": "2px",
-                "background": "#9B8B6E",
-                "borderTop": "2px dashed #9B8B6E",
-            }),
-            html.Div("▪  Total nacional", style={
-                "fontFamily": "'Source Serif 4', serif",
-                "fontSize": "0.82rem", "color": "#9B8B6E",
-            }),
-        ]),
+    fila_leyenda([
+        item_leyenda({
+            "width": "32px", "height": "3px",
+            "background": "#1A6FA8", "borderRadius": "2px",
+        }, "◯  Cabecera municipal", "#1A6FA8"),
+        item_leyenda({
+            "width": "32px", "height": "3px",
+            "background": "#C94A17",
+            "borderTop": "3px dotted #C94A17",
+            "borderBottom": "none",
+        }, "◆  Rural disperso", "#C94A17"),
+        item_leyenda({
+            "width": "32px", "height": "2px",
+            "background": "#9B8B6E",
+            "borderTop": "2px dashed #9B8B6E",
+        }, "▪  Total nacional", "#9B8B6E", negrita=False),
     ]),
 
-    # ── Selector de departamento ─────────────────────────
-    html.Div([
-    html.Label("Ver indicador", style={
-        "fontFamily": "'DM Mono', monospace",
-        "fontSize": "0.68rem", "letterSpacing": ".08em",
-        "color": "#6B6B6B", "textTransform": "uppercase",
-        "display": "block", "marginBottom": "5px",
-    }),
-    dcc.Dropdown(
+    # ── Selectores ───────────────────────────────────────
+    campo_dropdown("Ver indicador", dcc.Dropdown(
         id="dd-indicador-agua",
         options=[{"label": ind, "value": ind} for ind in INDICADORES_DISPONIBLES],
         value=INDICADORES_DISPONIBLES[0],
         clearable=False,
         style={"width": "420px", "fontFamily": "Georgia,serif"},
-    ),
-]),
-    html.Div(style={"marginBottom": "18px", "display": "flex", "gap": "16px", "alignItems": "flex-end"}, children=[
-        html.Div([
-            html.Label("Ver por departamento", style={
-                "fontFamily": "'DM Mono', monospace",
-                "fontSize": "0.68rem", "letterSpacing": ".08em",
-                "color": "#6B6B6B", "textTransform": "uppercase",
-                "display": "block", "marginBottom": "5px",
-            }),
-            dcc.Dropdown(
-                id="dd-dpto-agua",
-                options=(
-                    [{"label": "Nacional (promedio)", "value": "Nacional"}] +
-                    [{"label": d, "value": d} for d in dptos_disponibles]
-                ),
-                value="Nacional",
-                clearable=False,
-                style={"width": "280px", "fontFamily": "Georgia,serif"},
-            ),
-        ]),
+    )),
+    html.Div(style={"marginBottom": "18px", "display": "flex", "gap": "16px",
+                    "alignItems": "flex-end"}, children=[
+        campo_dropdown("Ver por departamento", dcc.Dropdown(
+            id="dd-dpto-agua",
+            options=opciones_con_nacional(dptos_disponibles),
+            value="Nacional",
+            clearable=False,
+            style={"width": "280px", "fontFamily": "Georgia,serif"},
+        )),
     ]),
 
-    # ── Gráfico ──────────────────────────────────────────
-    dcc.Graph(id="g-agua", config={"displayModeBar": False}),
-
-    # ── Nota metodológica ────────────────────────────────
-    html.P(id="fuente-agua",
-        style={
-            "fontFamily": "'DM Mono', monospace",
-            "fontSize": "0.68rem",
-            "color": "#9B8B6E",
-            "letterSpacing": "0.04em",
-            "marginTop": "12px",
-        }
-    ),
+    # ── Gráfico y nota metodológica ──────────────────────
+    grafico("g-agua"),
+    nota_fuente(id="fuente-agua"),
 ])
 
 # ══════════════════════════════════════════════════════════════════
 # BLOQUE HTML PARA LA SECCIÓN DE GÉNERO
 # ══════════════════════════════════════════════════════════════════
-SECCION_GENERO_LAYOUT = html.Div(style={
-    "background":    "#FFFFFF",
-    "borderRadius":  "12px",
-    "padding":       "28px 32px",
-    "boxShadow":     "0 2px 12px rgba(0,0,0,0.06)",
-    "marginBottom":  "24px",
-    "borderTop":     "4px solid #C94A17",
-}, children=[
+SECCION_GENERO_LAYOUT = panel_seccion("#C94A17", [
 
     # ── Encabezado ───────────────────────────────────────
-    html.P(TEXTO_GENERO["tag"], style={
-        "fontFamily":    "'DM Mono', monospace",
-        "fontSize":      "0.68rem",
-        "letterSpacing": "0.13em",
-        "color":         "#C94A17",
-        "marginBottom":  "6px",
-    }),
-
-    html.H2(TEXTO_GENERO["titulo"], style={
-        "fontFamily":   "'Playfair Display', serif",
-        "fontSize":     "clamp(1.2rem, 2.5vw, 1.8rem)",
-        "fontWeight":   "700",
-        "color":        "#1A1A1A",
-        "lineHeight":   "1.25",
-        "marginBottom": "10px",
-    }),
-
-    html.P(TEXTO_GENERO["subtitulo"], style={
-        "fontFamily":   "'Source Serif 4', serif",
-        "fontSize":     "0.95rem",
-        "color":        "#5A5A5A",
-        "lineHeight":   "1.7",
-        "maxWidth":     "780px",
-        "marginBottom": "22px",
-    }),
-
-    # ── Insight narrativo (evolución) ─────────────────────
-    html.Div(id="insight-genero", style={
-        "background":   "#FFF8F5",
-        "borderLeft":   "3px solid #C94A17",
-        "padding":      "14px 18px",
-        "borderRadius": "0 8px 8px 0",
-        "fontFamily":   "'Source Serif 4', serif",
-        "fontStyle":    "italic",
-        "color":        "#3A2A20",
-        "fontSize":     "0.93rem",
-        "lineHeight":   "1.65",
-        "marginBottom": "20px",
-    }),
+    tag_seccion("#C94A17", TEXTO_GENERO["tag"]),
+    titulo_seccion(TEXTO_GENERO["titulo"]),
+    subtitulo_seccion(TEXTO_GENERO["subtitulo"]),
+    caja_insight(id="insight-genero"),
 
     # ── Leyenda ───────────────────────────────────────────
-    html.Div(style={
-        "display": "flex", "gap": "60px", "flexWrap": "wrap",
-        "marginBottom": "24px", "alignItems": "center",
-    }, children=[
-        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px"}, children=[
-            html.Div(style={"width": "32px", "height": "3px",
-                            "background": "#1A6FA8", "borderRadius": "2px"}),
-            html.Div("◯  Hombre (jefe de hogar)", style={
-                "fontFamily": "'Source Serif 4', serif",
-                "fontSize": "0.82rem", "color": "#1A6FA8", "fontWeight": "600",
-            }),
-        ]),
-        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px"}, children=[
-            html.Div(style={
-                "width": "32px", "height": "0",
-                "borderTop": "3px dotted #C94A17",
-            }),
-            html.Div("◆  Mujer (jefa de hogar)", style={
-                "fontFamily": "'Source Serif 4', serif",
-                "fontSize": "0.82rem", "color": "#C94A17", "fontWeight": "600",
-            }),
-        ]),
+    fila_leyenda([
+        item_leyenda({"width": "32px", "height": "3px",
+                      "background": "#1A6FA8", "borderRadius": "2px"},
+                     "◯  Hombre (jefe de hogar)", "#1A6FA8"),
+        item_leyenda({"width": "32px", "height": "0",
+                      "borderTop": "3px dotted #C94A17"},
+                     "◆  Mujer (jefa de hogar)", "#C94A17"),
     ]),
 
     # ── Selector de departamento ──────────────────────────
-    html.Div(style={"marginBottom": "18px"}, children=[
-        html.Label("Ver por departamento", style={
-            "fontFamily":    "'DM Mono', monospace",
-            "fontSize":      "0.68rem",
-            "letterSpacing": ".08em",
-            "color":         "#6B6B6B",
-            "textTransform": "uppercase",
-            "display":       "block",
-            "marginBottom":  "5px",
-        }),
-        dcc.Dropdown(
-            id="dd-dpto-genero",
-            options=(
-                [{"label": "Nacional (promedio)", "value": "Nacional"}] +
-                [{"label": d, "value": d} for d in dptos_sexo]
-            ),
-            value="Nacional",
-            clearable=False,
-            style={"width": "280px", "fontFamily": "Georgia,serif"},
-        ),
-    ]),
+    campo_dropdown("Ver por departamento", dcc.Dropdown(
+        id="dd-dpto-genero",
+        options=opciones_con_nacional(dptos_sexo),
+        value="Nacional",
+        clearable=False,
+        style={"width": "280px", "fontFamily": "Georgia,serif"},
+    ), estilo={"marginBottom": "18px"}),
 
     # ── Gráfico: evolución Hombre vs Mujer ───────────────
     html.P("Evolución temporal por sexo del jefe de hogar",
            className="section-tag", style={"marginBottom": "4px"}),
-    dcc.Graph(id="g-genero-evol", config={"displayModeBar": False}),
+    grafico("g-genero-evol"),
 
     # ── Separador ────────────────────────────────────────
     html.Hr(style={"border": "none", "borderTop": "1px solid #E2DDD6",
@@ -1010,28 +688,12 @@ SECCION_GENERO_LAYOUT = html.Div(style={
             "marginBottom": "12px",
         },
     ),
-    html.Div(id="insight-disparidad-genero", style={
-        "background":   "#F5F8FF",
-        "borderLeft":   "3px solid #1A6FA8",
-        "padding":      "14px 18px",
-        "borderRadius": "0 8px 8px 0",
-        "fontFamily":   "'Source Serif 4', serif",
-        "fontStyle":    "italic",
-        "color":        "#1A2A3A",
-        "fontSize":     "0.91rem",
-        "lineHeight":   "1.65",
-        "marginBottom": "16px",
-    }),
-    dcc.Graph(id="g-genero-dpto", config={"displayModeBar": False}),
+    caja_insight(id="insight-disparidad-genero", fondo="#F5F8FF", borde="#1A6FA8",
+                 color="#1A2A3A", tamano="0.91rem", margen="16px"),
+    grafico("g-genero-dpto"),
 
     # ── Nota metodológica ─────────────────────────────────
-    html.P(TEXTO_GENERO["fuente"], style={
-        "fontFamily":   "'DM Mono', monospace",
-        "fontSize":     "0.68rem",
-        "color":        "#9B8B6E",
-        "letterSpacing": "0.04em",
-        "marginTop":    "12px",
-    }),
+    nota_fuente(TEXTO_GENERO["fuente"]),
 ])
 
 # ══════════════════════════════════════════════════════════════════
@@ -1472,31 +1134,21 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
             html.Div(style={"padding": "0 48px 48px"}, children=[
                 
                 # Contexto General Multidimensional
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "2fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("¿Qué es la Pobreza Multidimensional?", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "El Índice de Pobreza Multidimensional (IPM) permite comprender que la pobreza no es solo la falta de ingresos, "
-                            "sino el conjunto de múltiples privaciones simultáneas que enfrentan los hogares en aspectos fundamentales de su bienestar.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "A diferencia de la pobreza monetaria, el IPM evalúa si los hogares tienen acceso a educación oportuna, si los niños asisten al colegio, "
-                            "si cuentan con aseguramiento en salud, si disponen de acceso a agua mejorada y saneamiento, y si habitan en condiciones de hacinamiento crítico, entre otras. "
-                            "Un hogar se considera en situación de pobreza multidimensional si concentra privaciones en al menos el 33.3% del índice ponderado.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto(columnas="2fr 1fr", tarjetas=[
+                    tarjeta_texto("¿Qué es la Pobreza Multidimensional?", [
+                        "El Índice de Pobreza Multidimensional (IPM) permite comprender que la pobreza no es solo la falta de ingresos, "
+                        "sino el conjunto de múltiples privaciones simultáneas que enfrentan los hogares en aspectos fundamentales de su bienestar.",
+                        "A diferencia de la pobreza monetaria, el IPM evalúa si los hogares tienen acceso a educación oportuna, si los niños asisten al colegio, "
+                        "si cuentan con aseguramiento en salud, si disponen de acceso a agua mejorada y saneamiento, y si habitan en condiciones de hacinamiento crítico, entre otras. "
+                        "Un hogar se considera en situación de pobreza multidimensional si concentra privaciones en al menos el 33.3% del índice ponderado.",
                     ]),
-                    html.Div(style={**CARD, "background": "#B5341A", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("5 Dimensiones Evaluadas", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#FFF0ED"}, children=[
-                            html.Li("Condiciones Educativas"),
-                            html.Li("Condiciones de la Niñez y Juventud"),
-                            html.Li("Trabajo"),
-                            html.Li("Salud"),
-                            html.Li("Servicios Públicos y Vivienda"),
-                        ])
-                    ])
+                    tarjeta_lista("5 Dimensiones Evaluadas", [
+                        "Condiciones Educativas",
+                        "Condiciones de la Niñez y Juventud",
+                        "Trabajo",
+                        "Salud",
+                        "Servicios Públicos y Vivienda",
+                    ], fondo="#B5341A", color_items="#FFF0ED"),
                 ]),
 
                 # Gráfico: Si Colombia fueran 100 personas
@@ -1536,7 +1188,7 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                     html.Div(className="map-narrative", children=[
                         html.Div([
                             html.P("Distribución territorial", className="section-tag"),
-                            dcc.Graph(id="mapa", config={"displayModeBar": False})
+                            grafico("mapa")
                         ]),
                         html.Div([
                             html.P("Lectura del indicador de pobreza", className="section-tag"),
@@ -1558,38 +1210,26 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 "cabeceras municipales puede superar 30 puntos porcentuales de IPM."
             ),
             html.Div(style={"padding": "0 48px 48px"}, children=[
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "1.2fr 1fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("La Desigualdad Territorial", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "La brecha campo-ciudad refleja la concentración histórica de la inversión, servicios e infraestructura en las cabeceras municipales, "
-                            "dejando a las zonas rurales dispersas rezagadas en casi todos los indicadores de calidad de vida.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "Esta sección permite comparar directamente el IPM de las zonas urbanas con el de los centros poblados y áreas rurales dispersas. "
-                            "Un alto valor de brecha indica que el lugar de residencia determina en gran medida las oportunidades y el nivel de privación de los hogares.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto([
+                    tarjeta_texto("La Desigualdad Territorial", [
+                        "La brecha campo-ciudad refleja la concentración histórica de la inversión, servicios e infraestructura en las cabeceras municipales, "
+                        "dejando a las zonas rurales dispersas rezagadas en casi todos los indicadores de calidad de vida.",
+                        "Esta sección permite comparar directamente el IPM de las zonas urbanas con el de los centros poblados y áreas rurales dispersas. "
+                        "Un alto valor de brecha indica que el lugar de residencia determina en gran medida las oportunidades y el nivel de privación de los hogares.",
                     ]),
-                    html.Div(style={**CARD, "background": "#2D6A4F", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("Definición de Zonas", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#E6F4EA"}, children=[
-                            html.Li([html.B("Cabecera: ", style={"color": "white"}), "Área urbana principal del municipio."]),
-                            html.Li([html.B("Rural disperso: ", style={"color": "white"}), "Zonas alejadas y centros poblados menores."]),
-                            html.Li([html.B("Total: ", style={"color": "white"}), "Promedio ponderado del departamento."]),
-                        ])
-                    ]),
-                    html.Div(style={**CARD, "background": "#F5F8FF", "borderLeft": "4px solid #1A6FA8", "marginBottom": "0"}, children=[
-                        html.H3("Contexto Regional", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "#1A6FA8"}),
-                        html.P(
-                            "En América Latina, la pobreza rural sistemáticamente duplica o triplica a la urbana. "
-                            "La CEPAL advierte que el rezago en infraestructura y el aislamiento geográfico "
-                            "convierten a las zonas rurales dispersas en los territorios más excluidos del continente, "
-                            "un patrón estructural del cual Colombia es claro ejemplo.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "color": "#4A4A4A", "lineHeight": "1.7"}
-                        )
-                    ])
+                    tarjeta_lista("Definición de Zonas", [
+                        item_destacado("Cabecera: ", "Área urbana principal del municipio."),
+                        item_destacado("Rural disperso: ", "Zonas alejadas y centros poblados menores."),
+                        item_destacado("Total: ", "Promedio ponderado del departamento."),
+                    ], fondo="#2D6A4F", color_items="#E6F4EA"),
+                    tarjeta_nota(
+                        "Contexto Regional",
+                        "En América Latina, la pobreza rural sistemáticamente duplica o triplica a la urbana. "
+                        "La CEPAL advierte que el rezago en infraestructura y el aislamiento geográfico "
+                        "convierten a las zonas rurales dispersas en los territorios más excluidos del continente, "
+                        "un patrón estructural del cual Colombia es claro ejemplo.",
+                        fondo="#F5F8FF", color="#1A6FA8",
+                    ),
                 ]),
                 html.Div(style={"display": "flex", "gap": "16px", "marginBottom": "20px"}, children=[
                     html.Div(className="ctrl-group", children=[
@@ -1618,7 +1258,7 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 ]),
                 html.Div(style=CARD, children=[
                     html.Div(id="nar-brecha", style={"marginBottom": "16px"}),
-                    dcc.Graph(id="g-brecha", config={"displayModeBar": False})
+                    grafico("g-brecha")
                 ]),
             ]),
         ]),
@@ -1634,40 +1274,28 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 "trabajo infantil — y cómo evolucionan en el campo vs. la ciudad."
             ),
             html.Div(style={"padding": "0 48px 48px"}, children=[
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "1.2fr 1fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("Profundizando en las Privaciones", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "El Índice de Pobreza Multidimensional se compone de múltiples indicadores específicos que evalúan dimensiones clave del bienestar. "
-                            "Desagregar el índice general en estas variables permite identificar con precisión en qué aspectos están fallando las políticas sociales.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "En esta sección puede explorar cada indicador de forma individual, visualizando su evolución histórica y "
-                            "analizando las profundas diferencias que persisten entre las áreas urbanas y las zonas rurales dispersas para cada necesidad básica.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto([
+                    tarjeta_texto("Profundizando en las Privaciones", [
+                        "El Índice de Pobreza Multidimensional se compone de múltiples indicadores específicos que evalúan dimensiones clave del bienestar. "
+                        "Desagregar el índice general en estas variables permite identificar con precisión en qué aspectos están fallando las políticas sociales.",
+                        "En esta sección puede explorar cada indicador de forma individual, visualizando su evolución histórica y "
+                        "analizando las profundas diferencias que persisten entre las áreas urbanas y las zonas rurales dispersas para cada necesidad básica.",
                     ]),
-                    html.Div(style={**CARD, "background": "#7B2D8B", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("Aspectos a Explorar", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#F3E8F5"}, children=[
-                            html.Li("Acceso a agua y saneamiento."),
-                            html.Li("Condiciones de la vivienda."),
-                            html.Li("Barreras de acceso a salud."),
-                            html.Li("Logro y rezago escolar."),
-                            html.Li("Trabajo informal e infantil."),
-                        ])
-                    ]),
-                    html.Div(style={**CARD, "background": "#FFF5F8", "borderLeft": "4px solid #C94A17", "marginBottom": "0"}, children=[
-                        html.H3("Más Allá del Ingreso", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "#C94A17"}),
-                        html.P(
-                            "Incluso cuando las familias logran superar la línea de pobreza monetaria, las carencias estructurales "
-                            "como la falta de saneamiento básico o rezago escolar persisten. El enfoque multidimensional "
-                            "revela que la provisión de bienes públicos es el principal motor de desigualdad persistente "
-                            "en América Latina.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "color": "#4A4A4A", "lineHeight": "1.7"}
-                        )
-                    ])
+                    tarjeta_lista("Aspectos a Explorar", [
+                        "Acceso a agua y saneamiento.",
+                        "Condiciones de la vivienda.",
+                        "Barreras de acceso a salud.",
+                        "Logro y rezago escolar.",
+                        "Trabajo informal e infantil.",
+                    ], fondo="#7B2D8B", color_items="#F3E8F5"),
+                    tarjeta_nota(
+                        "Más Allá del Ingreso",
+                        "Incluso cuando las familias logran superar la línea de pobreza monetaria, las carencias estructurales "
+                        "como la falta de saneamiento básico o rezago escolar persisten. El enfoque multidimensional "
+                        "revela que la provisión de bienes públicos es el principal motor de desigualdad persistente "
+                        "en América Latina.",
+                        fondo="#FFF5F8", color="#C94A17",
+                    ),
                 ]),
                 SECCION_AGUA_LAYOUT,
             ]),
@@ -1684,51 +1312,39 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 "por región, revelando la desigualdad territorial del país."
             ),
             html.Div(style={"padding": "0 48px 48px"}, children=[
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "1.2fr 1fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("Geografía de la Pobreza en Colombia", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "El análisis por departamentos revela cómo la pobreza multidimensional no se distribuye de manera uniforme "
-                            "a lo largo del territorio nacional. Históricamente, las regiones periféricas han presentado mayores niveles de vulnerabilidad.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "Este ranking permite identificar no solo cuáles son los territorios con mayores necesidades "
-                            "sino también cómo se agrupan geográficamente. Comparar las regiones evidencia la brecha existente "
-                            "entre el centro del país y sus fronteras, la costa Pacífica y la Amazonía.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto([
+                    tarjeta_texto("Geografía de la Pobreza en Colombia", [
+                        "El análisis por departamentos revela cómo la pobreza multidimensional no se distribuye de manera uniforme "
+                        "a lo largo del territorio nacional. Históricamente, las regiones periféricas han presentado mayores niveles de vulnerabilidad.",
+                        "Este ranking permite identificar no solo cuáles son los territorios con mayores necesidades "
+                        "sino también cómo se agrupan geográficamente. Comparar las regiones evidencia la brecha existente "
+                        "entre el centro del país y sus fronteras, la costa Pacífica y la Amazonía.",
                     ]),
-                    html.Div(style={**CARD, "background": "#1A6FA8", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("Regiones de Análisis", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#E5F0F9"}, children=[
-                            html.Li("Amazonía-Orinoquía"),
-                            html.Li("Caribe"),
-                            html.Li("Pacífica"),
-                            html.Li("Central y Oriental"),
-                            html.Li("Bogotá D.C."),
-                        ])
-                    ]),
-                    html.Div(style={**CARD, "background": "#F0FAF5", "borderLeft": "4px solid #2D6A4F", "marginBottom": "0"}, children=[
-                        html.H3("Descentralización y Desigualdad", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "#2D6A4F"}),
-                        html.P(
-                            "América Latina es la región más desigual del mundo. Esta brecha no es solo social, sino marcadamente territorial. "
-                            "Las periferias (costas y selvas) heredan profundos rezagos frente a los centros administrativos andinos, "
-                            "demostrando que el Estado no ha logrado una integración equitativa del territorio nacional.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "color": "#4A4A4A", "lineHeight": "1.7"}
-                        )
-                    ])
+                    tarjeta_lista("Regiones de Análisis", [
+                        "Amazonía-Orinoquía",
+                        "Caribe",
+                        "Pacífica",
+                        "Central y Oriental",
+                        "Bogotá D.C.",
+                    ], fondo="#1A6FA8", color_items="#E5F0F9"),
+                    tarjeta_nota(
+                        "Descentralización y Desigualdad",
+                        "América Latina es la región más desigual del mundo. Esta brecha no es solo social, sino marcadamente territorial. "
+                        "Las periferias (costas y selvas) heredan profundos rezagos frente a los centros administrativos andinos, "
+                        "demostrando que el Estado no ha logrado una integración equitativa del territorio nacional.",
+                        fondo="#F0FAF5", color="#2D6A4F",
+                    ),
                 ]),
                 html.Div(className="two-col", children=[
                     html.Div(style=CARD, children=[
                         html.P("Departamentos más afectados", className="section-tag"),
                         html.Div(id="nar-rank", style={"marginBottom": "12px"}),
-                        dcc.Graph(id="g-rank", config={"displayModeBar": False})
+                        grafico("g-rank")
                     ]),
                     html.Div(style=CARD, children=[
                         html.P("IPM promedio por región", className="section-tag"),
                         html.Div(id="nar-region", style={"marginBottom": "12px"}),
-                        dcc.Graph(id="g-region", config={"displayModeBar": False})
+                        grafico("g-region")
                     ]),
                 ]),
             ]),
@@ -1745,39 +1361,27 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 "Los avances no son uniformes: mientras unas regiones mejoran, otras retroceden."
             ),
             html.Div(style={"padding": "0 48px 48px"}, children=[
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "1.2fr 1fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("Dinámica de la Pobreza en el Tiempo", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "La reducción de la pobreza multidimensional requiere políticas de Estado sostenidas en el tiempo. "
-                            "Al observar la evolución anual, podemos identificar si los departamentos están logrando avances constantes "
-                            "o si enfrentan estancamientos y retrocesos ante crisis económicas, sociales o climáticas.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "Una barra verde hacia la izquierda indica una disminución (mejora) en el IPM respecto al año anterior. "
-                            "Una barra roja hacia la derecha señala un aumento (empeoramiento) en la incidencia de la pobreza "
-                            "multidimensional en dicho territorio.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto([
+                    tarjeta_texto("Dinámica de la Pobreza en el Tiempo", [
+                        "La reducción de la pobreza multidimensional requiere políticas de Estado sostenidas en el tiempo. "
+                        "Al observar la evolución anual, podemos identificar si los departamentos están logrando avances constantes "
+                        "o si enfrentan estancamientos y retrocesos ante crisis económicas, sociales o climáticas.",
+                        "Una barra verde hacia la izquierda indica una disminución (mejora) en el IPM respecto al año anterior. "
+                        "Una barra roja hacia la derecha señala un aumento (empeoramiento) en la incidencia de la pobreza "
+                        "multidimensional en dicho territorio.",
                     ]),
-                    html.Div(style={**CARD, "background": "#E07B39", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("Lectura de la Variación", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#FDF2EC"}, children=[
-                            html.Li([html.B("Hacia la izquierda (Verde): ", style={"color": "white"}), "Reducción de la pobreza."]),
-                            html.Li([html.B("Hacia la derecha (Rojo): ", style={"color": "white"}), "Aumento de la pobreza."]),
-                            html.Li("Calculado en puntos porcentuales (pp)."),
-                        ])
-                    ]),
-                    html.Div(style={**CARD, "background": "#FEF5F2", "borderLeft": "4px solid #E07B39", "marginBottom": "0"}, children=[
-                        html.H3("Sensibilidad a las Crisis", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "#E07B39"}),
-                        html.P(
-                            "El progreso social es frágil. Eventos como la pandemia del COVID-19 o fenómenos climáticos (El Niño) "
-                            "tienen el potencial de borrar años de reducción de pobreza en América Latina en apenas meses. "
-                            "La resiliencia de los territorios depende directamente de la robustez de sus instituciones locales.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "color": "#4A4A4A", "lineHeight": "1.7"}
-                        )
-                    ])
+                    tarjeta_lista("Lectura de la Variación", [
+                        item_destacado("Hacia la izquierda (Verde): ", "Reducción de la pobreza."),
+                        item_destacado("Hacia la derecha (Rojo): ", "Aumento de la pobreza."),
+                        "Calculado en puntos porcentuales (pp).",
+                    ], fondo="#E07B39", color_items="#FDF2EC"),
+                    tarjeta_nota(
+                        "Sensibilidad a las Crisis",
+                        "El progreso social es frágil. Eventos como la pandemia del COVID-19 o fenómenos climáticos (El Niño) "
+                        "tienen el potencial de borrar años de reducción de pobreza en América Latina en apenas meses. "
+                        "La resiliencia de los territorios depende directamente de la robustez de sus instituciones locales.",
+                        fondo="#FEF5F2", color="#E07B39",
+                    ),
                 ]),
                 html.Div(style={"display": "flex", "gap": "16px", "marginBottom": "20px"}, children=[
                     html.Div(className="ctrl-group", children=[
@@ -1791,12 +1395,12 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 ]),
                 html.Div(style=CARD, children=[
                     html.P("Histórico de Pobreza (2018–2025)", className="section-tag"),
-                    dcc.Graph(id="g-line-evolucion", config={"displayModeBar": False})
+                    grafico("g-line-evolucion")
                 ]),
                 html.Div(style=CARD, children=[
                     html.P("Cambio respecto al año anterior", className="section-tag"),
                     html.Div(id="nar-comp", style={"marginBottom": "12px"}),
-                    dcc.Graph(id="g-comp", config={"displayModeBar": False})
+                    grafico("g-comp")
                 ]),
                 # Footer
                 html.Div(style={"textAlign": "center", "paddingTop": "8px"}, children=[
@@ -1820,36 +1424,24 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                 "Esta sección desagrega la privación por sexo en cada departamento."
             ),
             html.Div(style={"padding": "0 48px 48px"}, children=[
-                html.Div(style={"marginBottom": "32px", "display": "grid", "gridTemplateColumns": "1.2fr 1fr 1fr", "gap": "24px"}, children=[
-                    html.Div(style={**CARD, "marginBottom": "0"}, children=[
-                        html.H3("La Dimensión de Género en la Pobreza", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.4rem", "marginBottom": "12px", "color": "#1A1A1A"}),
-                        html.P(
-                            "La pobreza no es neutral al género. Los hogares con jefatura femenina suelen enfrentar mayores barreras debido a "
-                            "la desigualdad salarial, la carga desproporcionada del trabajo de cuidado no remunerado y el acceso limitado a activos productivos.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6", "marginBottom": "12px"}
-                        ),
-                        html.P(
-                            "Al analizar los indicadores con perspectiva de género, "
-                            "podemos visibilizar cómo el hecho de ser mujer agrava las vulnerabilidades preexistentes, especialmente en la ruralidad.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.95rem", "color": "#4A4A4A", "lineHeight": "1.6"}
-                        )
+                fila_contexto([
+                    tarjeta_texto("La Dimensión de Género en la Pobreza", [
+                        "La pobreza no es neutral al género. Los hogares con jefatura femenina suelen enfrentar mayores barreras debido a "
+                        "la desigualdad salarial, la carga desproporcionada del trabajo de cuidado no remunerado y el acceso limitado a activos productivos.",
+                        "Al analizar los indicadores con perspectiva de género, "
+                        "podemos visibilizar cómo el hecho de ser mujer agrava las vulnerabilidades preexistentes, especialmente en la ruralidad.",
                     ]),
-                    html.Div(style={**CARD, "background": "#C94A17", "color": "white", "marginBottom": "0"}, children=[
-                        html.H3("Conceptos Clave", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "white"}),
-                        html.Ul(style={"paddingLeft": "20px", "fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "lineHeight": "1.7", "color": "#FFF0ED"}, children=[
-                            html.Li([html.B("Jefatura Femenina: ", style={"color": "white"}), "Hogares donde la principal responsable económica es una mujer."]),
-                            html.Li([html.B("Doble Vulnerabilidad: ", style={"color": "white"}), "Cruzar las brechas territoriales con desigualdades de género."]),
-                        ])
-                    ]),
-                    html.Div(style={**CARD, "background": "#FDF2EC", "borderLeft": "4px solid #B5341A", "marginBottom": "0"}, children=[
-                        html.H3("Feminización de la Pobreza", style={"fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "14px", "color": "#B5341A"}),
-                        html.P(
-                            "De acuerdo con la CEPAL, por cada 100 hombres viviendo en pobreza en América Latina, hay aproximadamente 118 mujeres. "
-                            "Este índice de feminidad de la pobreza es impulsado por la informalidad laboral y la economía del cuidado, "
-                            "atrapando a las mujeres en un ciclo de dependencia y exclusión económica.",
-                            style={"fontFamily": "'Source Serif 4', serif", "fontSize": "0.85rem", "color": "#4A4A4A", "lineHeight": "1.7"}
-                        )
-                    ])
+                    tarjeta_lista("Conceptos Clave", [
+                        item_destacado("Jefatura Femenina: ", "Hogares donde la principal responsable económica es una mujer."),
+                        item_destacado("Doble Vulnerabilidad: ", "Cruzar las brechas territoriales con desigualdades de género."),
+                    ], fondo="#C94A17", color_items="#FFF0ED"),
+                    tarjeta_nota(
+                        "Feminización de la Pobreza",
+                        "De acuerdo con la CEPAL, por cada 100 hombres viviendo en pobreza en América Latina, hay aproximadamente 118 mujeres. "
+                        "Este índice de feminidad de la pobreza es impulsado por la informalidad laboral y la economía del cuidado, "
+                        "atrapando a las mujeres en un ciclo de dependencia y exclusión económica.",
+                        fondo="#FDF2EC", color="#B5341A",
+                    ),
                 ]),
                 SECCION_GENERO_LAYOUT,
             ]),
@@ -2297,51 +1889,17 @@ def actualizar_linea_evolucion(dpto):
     
     # Área de fondo para Rural Disperso
     if not df_rur.empty:
-        fig.add_trace(go.Scatter(
-            x=list(df_rur["Año"]) + list(df_rur["Año"])[::-1],
-            y=list(df_rur["IPM"]) + [0] * len(df_rur),
-            fill="toself",
-            fillcolor="rgba(201, 74, 23, 0.08)",
-            line=dict(width=0),
-            showlegend=False,
-            hoverinfo="skip"
-        ))
-    
-    # Trace 1: Cabecera
-    fig.add_trace(go.Scatter(
-        x=df_cab["Año"], y=df_cab["IPM"],
-        mode="lines+markers+text",
-        name="Cabecera",
-        line=dict(color=PALETA_AGUA["Cabecera"], width=ANCHO_AGUA["Cabecera"], dash=DASH_AGUA["Cabecera"]),
-        marker=dict(size=10, symbol=SIMBOLO_AGUA["Cabecera"], color=PALETA_AGUA["Cabecera"], line=dict(width=1.5, color="white")),
-        text=df_cab["IPM"].map("{:.1f}%".format),
-        textposition="top center",
-        textfont=dict(family="DM Mono, monospace", size=10, color=PALETA_AGUA["Cabecera"])
-    ))
-    
-    # Trace 2: Rural Disperso
-    fig.add_trace(go.Scatter(
-        x=df_rur["Año"], y=df_rur["IPM"],
-        mode="lines+markers+text",
-        name="Rural Disperso",
-        line=dict(color=PALETA_AGUA["Rural disperso"], width=ANCHO_AGUA["Rural disperso"], dash=DASH_AGUA["Rural disperso"]),
-        marker=dict(size=10, symbol=SIMBOLO_AGUA["Rural disperso"], color=PALETA_AGUA["Rural disperso"], line=dict(width=1.5, color="white")),
-        text=df_rur["IPM"].map("{:.1f}%".format),
-        textposition="top center",
-        textfont=dict(family="DM Mono, monospace", size=10, color=PALETA_AGUA["Rural disperso"])
-    ))
-    
-    # Trace 3: Total
-    fig.add_trace(go.Scatter(
-        x=df_tot["Año"], y=df_tot["IPM"],
-        mode="lines+markers+text",
-        name="Total",
-        line=dict(color=PALETA_AGUA["Total"], width=ANCHO_AGUA["Total"], dash=DASH_AGUA["Total"]),
-        marker=dict(size=10, symbol=SIMBOLO_AGUA["Total"], color=PALETA_AGUA["Total"], line=dict(width=1.5, color="white")),
-        text=df_tot["IPM"].map("{:.1f}%".format),
-        textposition="top center",
-        textfont=dict(family="DM Mono, monospace", size=10, color=PALETA_AGUA["Total"])
-    ))
+        add_area_bajo_linea(fig, df_rur["Año"], df_rur["IPM"], "rgba(201, 74, 23, 0.08)")
+
+    for nombre, zona, ds in (
+        ("Cabecera", "Cabecera", df_cab),
+        ("Rural Disperso", "Rural disperso", df_rur),
+        ("Total", "Total", df_tot),
+    ):
+        add_serie_anual(
+            fig, ds["Año"], ds["IPM"], nombre,
+            PALETA_AGUA[zona], ANCHO_AGUA[zona], DASH_AGUA[zona], SIMBOLO_AGUA[zona],
+        )
     
     # Añadir línea vertical y etiqueta para la brecha en el año más reciente
     if not df_rur.empty and not df_cab.empty:
@@ -2351,61 +1909,21 @@ def actualizar_linea_evolucion(dpto):
         if not val_rur.empty and not val_cab.empty:
             vr = val_rur.values[0]
             vc = val_cab.values[0]
-            fig.add_shape(
-                type="line",
-                x0=anio_max, x1=anio_max,
-                y0=vc, y1=vr,
-                line=dict(color=PALETA_AGUA["Rural disperso"], width=1.5, dash="dot")
+            add_marca_brecha(
+                fig, anio_max, vc, vr,
+                PALETA_AGUA["Rural disperso"],
+                f"Brecha:<br><b>+{vr - vc:.1f} pp</b>",
+                xshift=10, tamano_fuente=11,
+                bgcolor="rgba(255,255,255,0.8)", borderpad=3,
+                familia_fuente="'DM Mono', monospace",
             )
-            fig.add_annotation(
-                x=anio_max, y=(vr + vc)/2,
-                text=f"Brecha:<br><b>+{vr - vc:.1f} pp</b>",
-                showarrow=False,
-                xanchor="left", xshift=10,
-                font=dict(family="'DM Mono', monospace", size=11, color=PALETA_AGUA["Rural disperso"]),
-                bgcolor="rgba(255,255,255,0.8)", bordercolor=PALETA_AGUA["Rural disperso"], borderwidth=1, borderpad=3
-            )
-    
+
     titulo_dpto = "Promedio Nacional" if dpto == "Nacional" else dpto
-    
-    _layout = BASE_LAYOUT.copy()
-    _layout.update(
-        height=460,
-        margin=dict(t=50, b=150, l=60, r=80),
-        xaxis=dict(
-            title=dict(text="Año", font=dict(size=11, color="#6B6B6B")),
-            tickmode="array",
-            tickvals=df_tot["Año"].tolist(),
-            ticktext=[str(a) for a in df_tot["Año"].tolist()],
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True,
-            gridcolor="#F0EBE3",
-            gridwidth=1,
-            zeroline=False,
-        ),
-        yaxis=dict(
-            title=dict(text=f"IPM: {titulo_dpto}", font=dict(size=11, color="#6B6B6B")),
-            ticksuffix="%",
-            tickfont=dict(family="DM Mono, monospace", size=11),
-            showgrid=True,
-            gridcolor="#F0EBE3",
-            gridwidth=1,
-            zeroline=False,
-            rangemode="tozero",
-        ),
-        legend=dict(
-            orientation="h",
-            y=-0.55,
-            x=0.5,
-            xanchor="center",
-            font=dict(family="Source Serif 4, serif", size=12),
-            bgcolor="rgba(0,0,0,0)",
-            itemwidth=80,
-        ),
-        hovermode="x unified"
-    )
-    fig.update_layout(**_layout)
-    
+
+    fig.update_layout(**layout_serie_anual(
+        df_tot["Año"].tolist(), f"IPM: {titulo_dpto}"
+    ))
+
     return fig
 
 
