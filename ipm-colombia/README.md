@@ -97,6 +97,14 @@ python mapa_agua.py
 
 Abre tu navegador en: **http://127.0.0.1:8050**
 
+Variables de entorno opcionales:
+
+| Variable     | Default     | Descripción                                                        |
+|--------------|-------------|--------------------------------------------------------------------|
+| `HOST`       | `127.0.0.1` | Interfaz de escucha                                                |
+| `PORT`       | `8050`      | Puerto                                                             |
+| `DASH_DEBUG` | *(off)*     | `true` activa el modo debug. Solo en local: habilita la consola interactiva de Werkzeug, que permite ejecutar código arbitrario. |
+
 ---
 
 ## Regiones incluidas
