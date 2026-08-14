@@ -4,6 +4,8 @@ Fuente: DANE · Encuesta de Calidad de Vida (ECV)
 Incluye módulo: Brecha en Acceso a Fuente de Agua (2018–2025)
 """
 
+import os
+
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
@@ -2456,4 +2458,11 @@ server = app.server
 
 # ── Entry point ────────────────────────────────────────────────────
 if __name__ == "__main__":
-    app.run(debug=True)
+    # El modo debug expone la consola interactiva de Werkzeug (ejecución remota
+    # de código), por lo que solo se activa explícitamente en desarrollo local.
+    debug = os.environ.get("DASH_DEBUG", "").lower() in ("1", "true", "yes")
+    app.run(
+        host=os.environ.get("HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "8050")),
+        debug=debug,
+    )
