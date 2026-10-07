@@ -144,6 +144,24 @@ ENV/
 env.bak/
 venv.bak/
 
+# Datos y datasets (DANE / Shapefiles / CSVs)
+**/data/*
+!**/data/.gitkeep
+data/*
+!data/.gitkeep
+*.zip
+*.xlsx
+*.xls
+*.csv
+*.shp
+*.shx
+*.dbf
+*.cpg
+*.prj
+*.sbn
+*.sbx
+*.geojson
+
 # Spyder project settings
 .spyderproject
 .spyproject

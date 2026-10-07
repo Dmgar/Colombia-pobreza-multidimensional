@@ -1,138 +1,85 @@
 # IPM Colombia — Dashboard de Pobreza Multidimensional
 
-Dashboard interactivo para explorar el **Índice de Pobreza Multidimensional (IPM)** por departamento en Colombia, construido con Python, Dash y Plotly.
+Dashboard interactivo para explorar el **Índice de Pobreza Multidimensional (IPM)** por departamento en Colombia, construido con Python, Dash, Plotly y GeoPandas.
 
-**Fuente de datos:** DANE · Encuesta de Calidad de Vida (ECV) 2018–2025
-
----
-
-## Vista previa
-
-El dashboard incluye:
-- Mapa coroplético interactivo por departamento
-- Tarjeta "Si Colombia fueran 100 personas" con privaciones seleccionables
-- Comparativa de brechas campo–ciudad con sombreado visual
-- Ranking horizontal de departamentos más afectados
-- IPM promedio por región geográfica (Amazonía-Orinoquía, Caribe, Pacífica, Central, Oriental, Bogotá D.C.)
-- Evolución histórica 2018–2025 filtrable por departamento
-- Brecha de género por sexo del jefe de hogar
+**Fuente de datos:** DANE · Encuesta Nacional de Calidad de Vida (ECV) 2018–2025
 
 ---
 
-## Instalación
+## Módulos del Dashboard
 
-### 1. Clona el repositorio
+1. **Panorama General:** Mapa coroplético interactivo por departamento con métricas clave y departamentos extremos.
+2. **Brecha Campo–Ciudad:** Comparativa de brechas territoriales con filtros por zona (Cabeceras, Rural disperso, Brecha neta y Total).
+3. **Indicadores de Privación:** Selector dinámico de las 15 dimensiones de privación del IPM y visualización proporcional "Si Colombia fueran 100 personas".
+4. **Ranking Departamental:** Ranking horizontal de departamentos más afectados organizado por regiones.
+5. **Evolución Anual:** Serie histórica (2018–2025) filtrable por departamento y promedio nacional.
+6. **Brecha de Género:** Análisis comparativo según el sexo del jefe de hogar.
 
-```bash
-git clone https://github.com/Dmgar/Colombia-pobreza-multidimensional.git
-cd Colombia-pobreza-multidimensional/ipm-colombia
+---
+
+## Estructura de Archivos
+
+```text
+ipm-colombia/
+├── app.py                      # Punto de entrada principal recomendado
+├── mapa_agua.py                # Lógica del dashboard, layout y callbacks
+├── ui.py                       # Componentes de interfaz y diseño visual
+├── figuras.py                  # Plantillas de gráficos y anotaciones Plotly
+├── requirements.txt            # Lista de dependencias del entorno
+├── data/                       # Almacenamiento local de insumos (ignorado en Git)
+│   └── .gitkeep
+└── limpieza/                   # Módulo de procesamiento y transformación
+    ├── README.md               # Documentación específica de preparación
+    ├── procesar_datos.py       # Script ejecutable de extracción y limpieza
+    └── limpieza de datos.ipynb # Notebook interactivo
 ```
 
-### 2. Crea un entorno virtual (recomendado)
+---
 
-```bash
-python -m venv venv
+## Instalación y Ejecución Rápida
 
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-### 3. Instala las dependencias
+### 1. Activar entorno e instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 2. Preparar los datos
 
-> Los archivos de datos **no se incluyen** en el repositorio por su tamaño y licencia. Ver sección de datos abajo.
+Coloca los archivos oficiales en la carpeta `data/`:
+- `MGN2024_DPTO_POLITICO.zip` (descargar del Geoportal DANE)
+- `anex-PMultidimensional-Departamental-2025.xlsx` (descargar del portal DANE)
 
----
-
-## Datos necesarios
-
-Coloca todos los archivos en la carpeta `data/` del proyecto:
-
-```
-data/
-├── MGN2024_DPTO_POLITICO.zip   ← descargar manualmente del DANE
-├── ipm_dpto.csv
-├── ipm_indicadores_dpto.csv
-└── ipm_sexo_dpto.csv
-```
-
-### Geometría departamental
-- **Archivo:** `MGN2024_DPTO_POLITICO.zip`
-- **Fuente:** [DANE — Marco Geoestadístico Nacional 2024](https://geoportal.dane.gov.co/servicios/descarga-y-metadatos/datos-geoestadisticos/)
-- **Formato:** Shapefile comprimido en ZIP
-
-### Datos IPM por departamento (`ipm_dpto.csv`)
-- **Fuente:** DANE — ECV (Encuesta de Calidad de Vida)
-- **Columnas requeridas:**
-
-| Columna       | Tipo   | Descripción                                      |
-|---------------|--------|--------------------------------------------------|
-| `nombre_dpto` | str    | Nombre del departamento                          |
-| `cod_dpto`    | str    | Código DANE del departamento (2 dígitos, con 0 inicial) |
-| `Año`         | int    | Año de la medición                               |
-| `Categoria`   | str    | `Total`, `Cabeceras`, `Centros poblados y rural disperso` |
-| `IPM`         | float  | Valor del índice (porcentaje)                    |
-
-### Datos de indicadores de privación (`ipm_indicadores_dpto.csv`)
-Desagregación de las 15 privaciones del IPM por departamento, año y zona.
-
-### Datos por sexo (`ipm_sexo_dpto.csv`)
-IPM desagregado por sexo del jefe de hogar, para el análisis de brecha de género.
-
----
-
-## Ejecución
+Ejecuta el script de procesamiento:
 
 ```bash
-python mapa_agua.py
+python limpieza/procesar_datos.py
 ```
 
-Abre tu navegador en: **http://127.0.0.1:8050**
+### 3. Iniciar la aplicación
 
-Variables de entorno opcionales:
+```bash
+python app.py
+```
+*(o también: `python mapa_agua.py`)*
 
-| Variable     | Default     | Descripción                                                        |
-|--------------|-------------|--------------------------------------------------------------------|
-| `HOST`       | `127.0.0.1` | Interfaz de escucha                                                |
-| `PORT`       | `8050`      | Puerto                                                             |
-| `DASH_DEBUG` | *(off)*     | `true` activa el modo debug. Solo en local: habilita la consola interactiva de Werkzeug, que permite ejecutar código arbitrario. |
-
----
-
-## Regiones incluidas
-
-| Región                    | Departamentos                                             |
-|---------------------------|-----------------------------------------------------------|
-| Amazonía-Orinoquía        | Amazonas, Guainía, Guaviare, Vaupés, Vichada, Meta, Casanare, Arauca |
-| Caribe                    | Atlántico, Bolívar, Cesar, Córdoba, La Guajira, Magdalena, Sucre, San Andrés |
-| Pacífica                  | Chocó, Cauca, Nariño, Valle del Cauca                    |
-| Central                   | Antioquia, Caldas, Caquetá, Huila, Putumayo, Quindío, Risaralda, Tolima |
-| Oriental                  | Boyacá, Cundinamarca, Norte de Santander, Santander       |
-| Bogotá D.C.               | Bogotá D.C.                                               |
+Ingresa desde tu navegador a: **http://127.0.0.1:8050**
 
 ---
 
-## Tecnologías
+## Configuración del Servidor
 
-| Librería     | Versión  | Uso                              |
-|--------------|----------|----------------------------------|
-| Dash         | 4.1.0    | Framework web interactivo        |
-| Plotly       | 6.7.0    | Gráficas y mapa coroplético      |
-| Pandas       | 3.0.1    | Procesamiento de datos           |
-| GeoPandas    | 1.1.3    | Lectura de geometría espacial    |
-| NumPy        | 2.4.3    | Cálculos numéricos               |
-| Gunicorn     | 23.0.0   | Servidor WSGI para deploy        |
+Variables de entorno configurables:
+
+| Variable | Default | Descripción |
+| :--- | :--- | :--- |
+| `HOST` | `127.0.0.1` | Interfaz de red de escucha |
+| `PORT` | `8050` | Puerto local |
+| `DASH_DEBUG` | `false` | `true` activa el modo debug y hot reload |
 
 ---
 
 ## Licencia
 
-Datos: © DANE Colombia. Código: MIT License.
+- Código bajo licencia MIT.
+- Datos de libre acceso suministrados por el DANE Colombia.

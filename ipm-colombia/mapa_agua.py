@@ -1236,9 +1236,10 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
                         html.Label("Ordenar por zona", className="ctrl-label"),
                         dcc.Dropdown(id="dd-orden-brecha",
                             options=[
-                                {"label": "Brecha (Total departamental)", "value": "Total"},
-                                {"label": "Cabecera", "value": "Cabecera"},
-                                {"label": "Rural disperso", "value": "Centros poblados  y rural disperso"}
+                                {"label": "Brecha rural−urbana (Rural − Cabeceras)", "value": "brecha_neta"},
+                                {"label": "Rural disperso", "value": "Centros poblados y rural disperso"},
+                                {"label": "Cabeceras", "value": "Cabeceras"},
+                                {"label": "Total departamental", "value": "Total"}
                             ],
                             value="Total", clearable=False,
                             style={"width": "260px", "fontFamily": "Georgia,serif"}
@@ -1541,7 +1542,26 @@ def actualizar_ipm(categoria, anio, orden_zona, sentido):
 
     # Ordenamiento dinámico basado en filtros
     df_pivot = df_brecha.pivot(index="nombre_dpto", columns="Categoria", values="IPM").reset_index()
-    sort_col = orden_zona if orden_zona in df_pivot.columns else "Total"
+
+    # Detectar columnas rural y cabecera si existen
+    col_rural = next((c for c in df_pivot.columns if "rural" in str(c).lower()), None)
+    col_cab = next((c for c in df_pivot.columns if "cabecera" in str(c).lower()), None)
+
+    if col_rural and col_cab:
+        df_pivot["brecha_neta"] = df_pivot[col_rural] - df_pivot[col_cab]
+
+    orden_str = (str(orden_zona) if orden_zona is not None else "").lower().strip()
+    if "brecha" in orden_str:
+        sort_col = "brecha_neta" if "brecha_neta" in df_pivot.columns else "Total"
+    elif "rural" in orden_str or "centros" in orden_str:
+        sort_col = col_rural if col_rural else "Total"
+    elif "cabecera" in orden_str:
+        sort_col = col_cab if col_cab else "Total"
+    elif orden_zona in df_pivot.columns:
+        sort_col = orden_zona
+    else:
+        sort_col = "Total"
+
     ascending = (sentido == "asc")
     df_pivot = df_pivot.sort_values(by=sort_col, ascending=ascending)
     top12 = df_pivot.head(12)["nombre_dpto"].tolist()
@@ -1549,9 +1569,12 @@ def actualizar_ipm(categoria, anio, orden_zona, sentido):
     df_brecha12 = df_brecha[df_brecha["nombre_dpto"].isin(top12)]
 
     pal_brecha = {
-        "Total":  "#E8956D",
+        "Total": "#E8956D",
         "Cabecera": "#4A90D9",
+        "Cabeceras": "#4A90D9",
+        "Centros poblados y rural disperso": C["green"],
         "Centros poblados  y rural disperso": C["green"],
+        "Rural disperso": C["green"],
     }
     fig_brecha = px.bar(
         df_brecha12, x="IPM", y="nombre_dpto", color="Categoria",
