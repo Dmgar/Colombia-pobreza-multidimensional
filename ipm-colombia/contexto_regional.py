@@ -25,7 +25,7 @@ from ui import C, CARD, panel_seccion, tag_seccion, titulo_seccion, subtitulo_se
 DATOS_PAISES = {
     "Colombia": {
         "codigo": "COL",
-        "bandera": "🇨🇴",
+        "bandera": "COL",
         "bloque": "Miembro OCDE (2020) · Alianza del Pacífico",
         "ipm_nacional": 12.1,
         "ipm_rural": 27.3,
@@ -53,7 +53,7 @@ DATOS_PAISES = {
     },
     "Chile": {
         "codigo": "CHL",
-        "bandera": "🇨🇱",
+        "bandera": "CHL",
         "bloque": "Miembro OCDE (2010) · Alianza del Pacífico",
         "ipm_nacional": 3.8,
         "ipm_rural": 9.4,
@@ -80,7 +80,7 @@ DATOS_PAISES = {
     },
     "Costa Rica": {
         "codigo": "CRI",
-        "bandera": "🇨🇷",
+        "bandera": "CRI",
         "bloque": "Miembro OCDE (2021)",
         "ipm_nacional": 4.5,
         "ipm_rural": 11.2,
@@ -107,7 +107,7 @@ DATOS_PAISES = {
     },
     "México": {
         "codigo": "MEX",
-        "bandera": "🇲🇽",
+        "bandera": "MEX",
         "bloque": "Miembro OCDE (1994) · Alianza del Pacífico",
         "ipm_nacional": 7.2,
         "ipm_rural": 18.5,
@@ -134,7 +134,7 @@ DATOS_PAISES = {
     },
     "Uruguay": {
         "codigo": "URY",
-        "bandera": "🇺🇾",
+        "bandera": "URY",
         "bloque": "Mercosur",
         "ipm_nacional": 2.1,
         "ipm_rural": 4.8,
@@ -161,7 +161,7 @@ DATOS_PAISES = {
     },
     "Brasil": {
         "codigo": "BRA",
-        "bandera": "🇧🇷",
+        "bandera": "BRA",
         "bloque": "Mercosur · G20",
         "ipm_nacional": 6.2,
         "ipm_rural": 15.6,
@@ -188,7 +188,7 @@ DATOS_PAISES = {
     },
     "Perú": {
         "codigo": "PER",
-        "bandera": "🇵🇪",
+        "bandera": "PER",
         "bloque": "Alianza del Pacífico · Comunidad Andina",
         "ipm_nacional": 11.5,
         "ipm_rural": 34.2,
@@ -215,7 +215,7 @@ DATOS_PAISES = {
     },
     "Ecuador": {
         "codigo": "ECU",
-        "bandera": "🇪🇨",
+        "bandera": "ECU",
         "bloque": "Comunidad Andina",
         "ipm_nacional": 14.8,
         "ipm_rural": 36.5,
@@ -242,7 +242,7 @@ DATOS_PAISES = {
     },
     "Promedio América Latina": {
         "codigo": "LAC",
-        "bandera": "🌎",
+        "bandera": "LAC",
         "bloque": "CEPAL / PNUD América Latina y el Caribe",
         "ipm_nacional": 12.8,
         "ipm_rural": 26.5,
@@ -269,7 +269,7 @@ DATOS_PAISES = {
     },
     "Promedio OCDE": {
         "codigo": "OECD",
-        "bandera": "🏛️",
+        "bandera": "OECD",
         "bloque": "Organización para la Cooperación y el Desarrollo Económicos",
         "ipm_nacional": 1.8,
         "ipm_rural": 3.2,
@@ -327,8 +327,8 @@ def build_fig_radar_regional(pais_comp="Chile"):
         fill="toself",
         fillcolor="rgba(181, 52, 26, 0.20)",
         line=dict(color="#B5341A", width=3),
-        name="🇨🇴 Colombia",
-        hovertemplate="<b>Colombia</b><br>%{theta}: %{r:.1f}% de hogares con privación<extra></extra>"
+        name="Colombia (COL)",
+        hovertemplate="<b>Colombia (COL)</b><br>%{theta}: %{r:.1f}% de hogares con privación<extra></extra>"
     ))
     
     # Traza País Comparado
@@ -338,8 +338,8 @@ def build_fig_radar_regional(pais_comp="Chile"):
         fill="toself",
         fillcolor="rgba(26, 111, 168, 0.18)",
         line=dict(color=info_cmp["color"], width=2.5, dash="dash"),
-        name=f"{info_cmp['bandera']} {pais_comp}",
-        hovertemplate=f"<b>{pais_comp}</b><br>%{{theta}}: %{{r:.1f}}% de hogares con privación<extra></extra>"
+        name=f"{pais_comp} ({info_cmp['codigo']})",
+        hovertemplate=f"<b>{pais_comp} ({info_cmp['codigo']})</b><br>%{{theta}}: %{{r:.1f}}% de hogares con privación<extra></extra>"
     ))
     
     fig.update_layout(
@@ -382,8 +382,7 @@ def build_fig_dispersion_pobreza_gini():
         filas.append({
             "pais": nombre,
             "codigo": d["codigo"],
-            "bandera": d["bandera"],
-            "etiqueta": f"{d['bandera']} {nombre}",
+            "etiqueta": f"{nombre} ({d['codigo']})",
             "ipm": d["ipm_nacional"],
             "gini": d["gini"],
             "informalidad": d["informalidad"],
@@ -417,7 +416,7 @@ def build_fig_dispersion_pobreza_gini():
             y=[row["gini"]],
             mode="markers+text",
             name=row["pais"],
-            text=[f"<b>{row['bandera']} {row['codigo']}</b>" if es_col else f"{row['bandera']} {row['codigo']}"],
+            text=[f"<b>{row['codigo']}</b>" if es_col else row["codigo"]],
             textposition="top center",
             textfont=dict(
                 family=FUENTE_MONO,
@@ -431,7 +430,7 @@ def build_fig_dispersion_pobreza_gini():
                 symbol="star" if es_col else ("diamond" if "Promedio" in row["pais"] else "circle")
             ),
             hovertemplate=(
-                f"<b>{row['bandera']} {row['pais']}</b><br>"
+                f"<b>{row['pais']} ({row['codigo']})</b><br>"
                 f"Bloque: {row['bloque']}<br>"
                 f"IPM Nacional: <b>%{row['ipm']:.1f}%</b><br>"
                 f"Coeficiente de Gini: <b>%{row['gini']:.3f}</b><br>"
@@ -469,7 +468,7 @@ def build_fig_informalidad_gasto():
     for nombre, d in DATOS_PAISES.items():
         filas.append({
             "pais": nombre,
-            "etiqueta": f"{d['bandera']} {nombre}",
+            "etiqueta": f"{nombre} ({d['codigo']})",
             "informalidad": d["informalidad"],
             "gasto_social": d["gasto_social_pib"],
             "es_colombia": (nombre == "Colombia")
@@ -529,7 +528,7 @@ def build_kpis_regionales(pais_sel="Chile"):
     dif_inf = col["informalidad"] - cmp["informalidad"]
     dif_soc = col["gasto_social_pib"] - cmp["gasto_social_pib"]
     
-    def tarjeta(titulo, val_col, val_cmp, unidad, dif, es_inverso=False, decimales=1):
+    def tarjeta(titulo, icono, val_col, val_cmp, unidad, dif, es_inverso=False, decimales=1):
         formato = f"{{:.{decimales}f}}"
         # En gasto social, mayor es mejor; en pobreza, menor es mejor
         es_favorable = (dif < 0) if not es_inverso else (dif > 0)
@@ -543,10 +542,15 @@ def build_kpis_regionales(pais_sel="Chile"):
             "borderLeft": f"4px solid {color_dif}",
             "boxShadow": "0 2px 8px rgba(0,0,0,0.05)",
         }, children=[
-            html.P(titulo, style={
-                "fontFamily": FUENTE_MONO, "fontSize": "0.68rem", "color": "#6B6B6B",
-                "letterSpacing": "0.08em", "textTransform": "uppercase", "marginBottom": "6px"
-            }),
+            html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px", "marginBottom": "6px"}, children=[
+                html.Span(icono, className="material-symbols-outlined", style={
+                    "fontSize": "1rem", "color": "#6B6B6B", "lineHeight": "1"
+                }),
+                html.P(titulo, style={
+                    "fontFamily": FUENTE_MONO, "fontSize": "0.68rem", "color": "#6B6B6B",
+                    "letterSpacing": "0.08em", "textTransform": "uppercase", "margin": 0
+                }),
+            ]),
             html.Div(style={"display": "flex", "alignItems": "baseline", "gap": "10px"}, children=[
                 html.Span(f"{formato.format(val_col)}{unidad}", style={
                     "fontFamily": FUENTE_MONO, "fontSize": "1.7rem", "fontWeight": "700", "color": "#B5341A"
@@ -565,10 +569,10 @@ def build_kpis_regionales(pais_sel="Chile"):
         "display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(220px, 1fr))",
         "gap": "16px", "marginBottom": "28px"
     }, children=[
-        tarjeta("Incidencia IPM Nacional", col["ipm_nacional"], cmp["ipm_nacional"], "%", dif_ipm),
-        tarjeta("Desigualdad (Gini)", col["gini"], cmp["gini"], "", dif_gini, decimales=3),
-        tarjeta("Informalidad Laboral", col["informalidad"], cmp["informalidad"], "%", dif_inf),
-        tarjeta("Gasto Social Público", col["gasto_social_pib"], cmp["gasto_social_pib"], "% PIB", dif_soc, es_inverso=True),
+        tarjeta("Incidencia IPM Nacional", "analytics", col["ipm_nacional"], cmp["ipm_nacional"], "%", dif_ipm),
+        tarjeta("Desigualdad (Gini)", "balance", col["gini"], cmp["gini"], "", dif_gini, decimales=3),
+        tarjeta("Informalidad Laboral", "badge", col["informalidad"], cmp["informalidad"], "%", dif_inf),
+        tarjeta("Gasto Social Público", "account_balance", col["gasto_social_pib"], cmp["gasto_social_pib"], "% PIB", dif_soc, es_inverso=True),
     ])
 
 
@@ -625,11 +629,11 @@ def build_seccion_regional_layout():
                         }),
                         dcc.Dropdown(
                             id="dd-pais-regional",
-                            options=[{"label": f"{DATOS_PAISES[p]['bandera']} {p} ({DATOS_PAISES[p]['bloque']})", "value": p} 
+                            options=[{"label": f"{p} ({DATOS_PAISES[p]['codigo']}) · {DATOS_PAISES[p]['bloque']}", "value": p} 
                                      for p in PAISES_SELECCIONABLES],
                             value="Chile",
                             clearable=False,
-                            style={"width": "380px", "fontFamily": "Georgia, serif"}
+                            style={"width": "420px", "fontFamily": "Georgia, serif"}
                         )
                     ]),
                     html.Div(id="tag-bloque-regional", style={"marginLeft": "auto", "paddingTop": "14px"})
@@ -719,8 +723,14 @@ def build_seccion_regional_layout():
                         "background": "#F7FBF8", "padding": "22px", "borderRadius": "8px",
                         "borderTop": "3px solid #2D6A4F"
                     }, children=[
-                        html.H4("👶 1. Capital Humano y Primera Infancia", style={
-                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#2D6A4F"
+                        html.H4([
+                            html.Span("child_care", className="material-symbols-outlined", style={
+                                "fontSize": "1.3rem", "marginRight": "8px", "color": "#2D6A4F", "verticalAlign": "middle"
+                            }),
+                            "1. Capital Humano y Primera Infancia"
+                        ], style={
+                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#2D6A4F",
+                            "display": "flex", "alignItems": "center"
                         }),
                         html.P(
                             "El Índice de Capital Humano (HCI) de Colombia es 0.60. Esto implica que un niño nacido hoy "
@@ -736,8 +746,14 @@ def build_seccion_regional_layout():
                         "background": "#FFFBF5", "padding": "22px", "borderRadius": "8px",
                         "borderTop": "3px solid #D97706"
                     }, children=[
-                        html.H4("⚙️ 2. Dualismo Laboral y Productividad", style={
-                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#D97706"
+                        html.H4([
+                            html.Span("work", className="material-symbols-outlined", style={
+                                "fontSize": "1.3rem", "marginRight": "8px", "color": "#D97706", "verticalAlign": "middle"
+                            }),
+                            "2. Dualismo Laboral y Productividad"
+                        ], style={
+                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#D97706",
+                            "display": "flex", "alignItems": "center"
                         }),
                         html.P(
                             "Con un 55.8% de informalidad nacional y más del 80% en áreas rurales, la productividad laboral "
@@ -753,8 +769,14 @@ def build_seccion_regional_layout():
                         "background": "#FDF8F5", "padding": "22px", "borderRadius": "8px",
                         "borderTop": "3px solid #B5341A"
                     }, children=[
-                        html.H4("🏞️ 3. Trampa de Exclusión Territorial", style={
-                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#B5341A"
+                        html.H4([
+                            html.Span("landscape", className="material-symbols-outlined", style={
+                                "fontSize": "1.3rem", "marginRight": "8px", "color": "#B5341A", "verticalAlign": "middle"
+                            }),
+                            "3. Trampa de Exclusión Territorial"
+                        ], style={
+                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#B5341A",
+                            "display": "flex", "alignItems": "center"
                         }),
                         html.P(
                             "La brecha rural-urbana de 18.4 puntos de IPM (27.3% rural vs 8.9% en cabeceras) sitúa a Colombia "
@@ -770,8 +792,14 @@ def build_seccion_regional_layout():
                         "background": "#F8F5FB", "padding": "22px", "borderRadius": "8px",
                         "borderTop": "3px solid #7C3AED"
                     }, children=[
-                        html.H4("⚖️ 4. Feminización y Economía del Cuidado", style={
-                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#7C3AED"
+                        html.H4([
+                            html.Span("family_restroom", className="material-symbols-outlined", style={
+                                "fontSize": "1.3rem", "marginRight": "8px", "color": "#7C3AED", "verticalAlign": "middle"
+                            }),
+                            "4. Feminización y Economía del Cuidado"
+                        ], style={
+                            "fontFamily": "'Playfair Display', serif", "fontSize": "1.1rem", "marginBottom": "10px", "color": "#7C3AED",
+                            "display": "flex", "alignItems": "center"
                         }),
                         html.P(
                             "La falta de cobertura en cuidado infantil temprano recae desproporcionadamente en las mujeres, "
@@ -787,8 +815,14 @@ def build_seccion_regional_layout():
                     "marginTop": "28px", "background": "#FFFFFF", "padding": "24px",
                     "borderRadius": "8px", "border": "1px solid #E2DDD6"
                 }, children=[
-                    html.H4("💡 Simulador Didáctico: ¿Qué ganaría Colombia si cerrara sus brechas críticas?", style={
-                        "fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "10px", "color": "#1A1A1A"
+                    html.H4([
+                        html.Span("tune", className="material-symbols-outlined", style={
+                            "fontSize": "1.35rem", "marginRight": "8px", "color": "#1A1A1A", "verticalAlign": "middle"
+                        }),
+                        "Simulador de Políticas: ¿Qué ganaría Colombia si cerrara sus brechas críticas?"
+                    ], style={
+                        "fontFamily": "'Playfair Display', serif", "fontSize": "1.2rem", "marginBottom": "10px", "color": "#1A1A1A",
+                        "display": "flex", "alignItems": "center"
                     }),
                     html.P(
                         "Selecciona un objetivo de convergencia para proyectar el impacto económico y social:",
@@ -798,9 +832,9 @@ def build_seccion_regional_layout():
                         dcc.RadioItems(
                             id="radio-simulador",
                             options=[
-                                {"label": " 💧 Universalizar Agua y Saneamiento Rural al 95%", "value": "agua"},
-                                {"label": " 💼 Reducir Informalidad al promedio de Alianza del Pacífico (40%)", "value": "empleo"},
-                                {"label": " 🎓 Reducir Rezago Escolar e Inasistencia al nivel de Chile", "value": "educacion"}
+                                {"label": " Universalizar Agua y Saneamiento Rural al 95%", "value": "agua"},
+                                {"label": " Reducir Informalidad al promedio de Alianza del Pacífico (40%)", "value": "empleo"},
+                                {"label": " Reducir Rezago Escolar e Inasistencia al nivel de Chile", "value": "educacion"}
                             ],
                             value="agua",
                             inline=True,

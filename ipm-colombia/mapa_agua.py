@@ -742,7 +742,14 @@ SECCION_GENERO_LAYOUT = panel_seccion("#C94A17", [
 # ══════════════════════════════════════════════════════════════════
 # APP DASH
 # ══════════════════════════════════════════════════════════════════
-app = Dash(__name__, title="IPM Colombia · DANE", external_stylesheets=['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'])
+app = Dash(
+    __name__,
+    title="IPM Colombia · DANE",
+    external_stylesheets=[
+        "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200",
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
+    ],
+)
 
 app.index_string = """
 <!DOCTYPE html>
@@ -752,7 +759,10 @@ app.index_string = """
     <title>{%title%}</title>
     {%favicon%}
     {%css%}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
         /* ── Reset ───────────────────────────────────────────── */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -853,11 +863,36 @@ app.index_string = """
             background: rgba(181,52,26,0.10);
             color: #F0EDE8;
         }
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 1.25rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
         .nav-icon {
-            font-size: 1rem;
-            width: 18px;
+            font-size: 1.15rem;
+            width: 20px;
+            height: 20px;
             text-align: center;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            transition: color 0.15s;
+        }
+        .nav-item:hover .nav-icon {
+            color: #D0CCC6;
+        }
+        .nav-item.active .nav-icon {
+            color: #B5341A;
         }
         .nav-label {
             font-family: 'Source Serif 4', serif;
@@ -1049,9 +1084,9 @@ def page_header(tag, title, desc):
         html.P(desc),
     ])
 
-def nav_item(icon, label, section, badge=None):
+def nav_item(icon_name, label, section, badge=None):
     children = [
-        html.Span(icon, className="nav-icon"),
+        html.Span(icon_name, className="material-symbols-outlined nav-icon"),
         html.Span(label, className="nav-label"),
     ]
     if badge:
@@ -1080,13 +1115,13 @@ app.layout = html.Div(style={"display": "flex", "width": "100%", "minHeight": "1
         # Navegación
         html.Nav(className="sidebar-nav", children=[
             html.P("Explorar", className="nav-section-label"),
-            nav_item("🗺️", "Panorama general",   "panorama"),
-            nav_item("⚖️", "Brecha campo–ciudad", "brecha"),
-            nav_item("💧", "Indicadores de privación", "indicadores", "15"),
-            nav_item("📊", "Ranking departamental", "ranking"),
-            nav_item("📈", "Evolución anual",     "evolucion"),
-            nav_item("⚥",  "Brecha por género",   "genero"),
-            nav_item("🌎", "Contexto regional & OCDE", "regional", "Nuevo"),
+            nav_item("explore", "Panorama general",   "panorama"),
+            nav_item("balance", "Brecha campo–ciudad", "brecha"),
+            nav_item("checklist", "Indicadores de privación", "indicadores", "15"),
+            nav_item("leaderboard", "Ranking departamental", "ranking"),
+            nav_item("trending_up", "Evolución anual",     "evolucion"),
+            nav_item("diversity_3",  "Brecha por género",   "genero"),
+            nav_item("public", "Contexto regional & OCDE", "regional", "Nuevo"),
         ]),
 
         # Footer sidebar
@@ -2114,8 +2149,14 @@ def actualizar_contexto_regional(pais_sel):
 def actualizar_simulador(opcion):
     if opcion == "agua":
         return html.Div([
-            html.H5("💧 Impacto de Universalizar Agua y Saneamiento Rural al 95%:", style={
-                "fontFamily": "'Playfair Display', serif", "color": "#2D6A4F", "fontSize": "1.05rem", "marginBottom": "6px"
+            html.H5([
+                html.Span("water_drop", className="material-symbols-outlined", style={
+                    "verticalAlign": "middle", "marginRight": "8px", "color": "#2D6A4F", "fontSize": "1.25rem"
+                }),
+                "Impacto de Universalizar Agua y Saneamiento Rural al 95%:"
+            ], style={
+                "fontFamily": "'Playfair Display', serif", "color": "#2D6A4F", "fontSize": "1.05rem", "marginBottom": "6px",
+                "display": "flex", "alignItems": "center"
             }),
             html.Ul(style={"fontFamily": FUENTE_SERIF, "fontSize": "0.9rem", "lineHeight": "1.65", "color": "#333", "paddingLeft": "18px"}, children=[
                 html.Li(["El ", html.B("IPM Nacional caería de 12.1% a 9.8%"), " (-2.3 pp), beneficiando directamente a más de 2.8 millones de habitantes rurales."]),
@@ -2125,8 +2166,14 @@ def actualizar_simulador(opcion):
         ])
     elif opcion == "empleo":
         return html.Div([
-            html.H5("💼 Impacto de Reducir la Informalidad Laboral al 40% (Promedio Alianza del Pacífico):", style={
-                "fontFamily": "'Playfair Display', serif", "color": "#D97706", "fontSize": "1.05rem", "marginBottom": "6px"
+            html.H5([
+                html.Span("badge", className="material-symbols-outlined", style={
+                    "verticalAlign": "middle", "marginRight": "8px", "color": "#D97706", "fontSize": "1.25rem"
+                }),
+                "Impacto de Reducir la Informalidad Laboral al 40% (Promedio Alianza del Pacífico):"
+            ], style={
+                "fontFamily": "'Playfair Display', serif", "color": "#D97706", "fontSize": "1.05rem", "marginBottom": "6px",
+                "display": "flex", "alignItems": "center"
             }),
             html.Ul(style={"fontFamily": FUENTE_SERIF, "fontSize": "0.9rem", "lineHeight": "1.65", "color": "#333", "paddingLeft": "18px"}, children=[
                 html.Li(["El ", html.B("IPM Nacional caería de 12.1% a 8.4%"), " (-3.7 pp), al ser el empleo el pilar con mayor peso acumulado en privación de hogares."]),
@@ -2136,8 +2183,14 @@ def actualizar_simulador(opcion):
         ])
     else:  # educacion
         return html.Div([
-            html.H5("🎓 Impacto de Cerrar la Brecha Educativa en Rezago e Inasistencia:", style={
-                "fontFamily": "'Playfair Display', serif", "color": "#7C3AED", "fontSize": "1.05rem", "marginBottom": "6px"
+            html.H5([
+                html.Span("school", className="material-symbols-outlined", style={
+                    "verticalAlign": "middle", "marginRight": "8px", "color": "#7C3AED", "fontSize": "1.25rem"
+                }),
+                "Impacto de Cerrar la Brecha Educativa en Rezago e Inasistencia:"
+            ], style={
+                "fontFamily": "'Playfair Display', serif", "color": "#7C3AED", "fontSize": "1.05rem", "marginBottom": "6px",
+                "display": "flex", "alignItems": "center"
             }),
             html.Ul(style={"fontFamily": FUENTE_SERIF, "fontSize": "0.9rem", "lineHeight": "1.65", "color": "#333", "paddingLeft": "18px"}, children=[
                 html.Li(["El ", html.B("IPM Nacional caería de 12.1% a 10.2%"), " (-1.9 pp), asegurando que más de 620,000 niños y jóvenes rurales completen educación media."]),
