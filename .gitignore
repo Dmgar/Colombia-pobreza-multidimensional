@@ -161,6 +161,7 @@ data/*
 *.sbn
 *.sbx
 *.geojson
+!**/data/colombia_dpto_simplified.geojson
 
 # Spyder project settings
 .spyderproject

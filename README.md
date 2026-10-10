@@ -8,7 +8,12 @@ Dashboard interactivo para la exploración, visualización y análisis geoespaci
 
 ## Características del Dashboard
 
-- **Panorama General & Mapa Coroplético:** Visualización geográfica interactiva con las geometrías oficiales del Marco Geoestadístico Nacional (MGN 2024).
+- **Panorama General & Mapa Coroplético:** Visualización geográfica interactiva con las geometrías oficiales del Marco Geoestadístico Nacional (MGN 2024) optimizadas en GeoJSON.
+- **Contexto Regional & Benchmarking OCDE/CEPAL (Nuevo):** Comparativa internacional de Colombia frente a 9 pares latinoamericanos (Chile, Costa Rica, México, Brasil, Perú, Ecuador, Uruguay, Bolivia, Argentina) y los promedios regionales de la CEPAL y la OCDE.
+- **Radar Multidimensional de 5 Pilares:** Evaluación comparativa en Educación y Logro, Salud y Nutrición, Agua y Saneamiento, Vivienda Digna, y Trabajo/Protección Social.
+- **Cuadrantes de Desarrollo (Pobreza vs Gini):** Gráfico interactivo que expone la ubicación de Colombia en el cuadrante de alta desigualdad de la OCDE y su trampa de movilidad intergeneracional (11 generaciones para salir de la pobreza).
+- **Análisis de Impacto en Bienestar Poblacional:** Diagnósticos rigurosos sobre la pérdida irreversible de capital humano en la primera infancia (HCI 0.60), el dualismo productivo por informalidad (>55% nacional, >80% rural) y la economía del cuidado no remunerado.
+- **Simulador Didáctico de Políticas:** Proyección de reducción del IPM y ganancias en capital humano al universalizar agua rural o formalizar el empleo.
 - **Brecha Campo–Ciudad:** Comparación directa entre cabeceras municipales y centros poblados / rural disperso con filtros dinámicos por zona, brecha neta y sentido.
 - **Indicadores de Privación:** Módulo con selector de las 15 dimensiones de privación del IPM (acceso a agua, analfabetismo, saneamiento básico, empleo informal, salud, etc.) y dinámica "Si Colombia fueran 100 personas".
 - **Ranking Departamental:** Vista horizontal de los departamentos con mayores y menores niveles de privación clasificados por región.
@@ -27,10 +32,12 @@ Colombia-pobreza-multidimensional/
 └── ipm-colombia/
     ├── app.py                      # Punto de entrada principal del dashboard
     ├── mapa_agua.py                # Implementación central del layout y callbacks Dash
-    ├── ui.py                       # Componentes reutilizables de UI y paletas de color
+    ├── contexto_regional.py        # Módulo de benchmarking latinoamericano y análisis OCDE/CEPAL
+    ├── ui.py                       # Componentes reutilizables de UI y paletas editoriales
     ├── figuras.py                  # Generadores de gráficos y estilos de Plotly
-    ├── requirements.txt            # Dependencias del proyecto
-    ├── data/                       # Carpeta local para los datos (no incluida en Git)
+    ├── requirements.txt            # Dependencias del proyecto (Dash, Plotly, PyShp, Shapely)
+    ├── data/                       # Carpeta local de datos
+    │   ├── colombia_dpto_simplified.geojson # Geometrías vectoriales optimizadas (552 KB)
     │   └── .gitkeep
     └── limpieza/                   # Scripts y notebooks de preparación de datos
         ├── README.md               # Documentación del pipeline de limpieza
@@ -124,9 +131,9 @@ Abre tu navegador en: **[http://127.0.0.1:8050](http://127.0.0.1:8050)**
 ## Tecnologías Utilizadas
 
 - **Dash 4.1.0** — Framework web interactivo reactivo
-- **Plotly 5.24.1 / 6.x** — Gráficos estadísticos y coropletas
-- **GeoPandas 1.1.3 & PyOgrio** — Lectura y proyección de shapefiles espaciales
-- **Pandas** — Manipulación y estructuración de series temporales
+- **Plotly 5.24.1 / 6.x** — Gráficos estadísticos, mapas coropléticos y radar multidimensional
+- **PyShp 3.1 & Shapely 2.0** — Procesamiento vectorial y simplificación topológica de geometrías
+- **Pandas** — Manipulación y estructuración de series temporales e indicadores
 - **OpenPyXL** — Motor de lectura para hojas de cálculo Excel
 - **Flask & Werkzeug** — Servidor backend WSGI
 
